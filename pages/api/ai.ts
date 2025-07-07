@@ -1,15 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createAIClient } from '../../services/ai-wrapper';
-import { Case, CaseState, Feedback, InvestigationResult, Message, DetailedFeedbackReport } from '../../types';
+import { Case, CaseState, Feedback, InvestigationResult, Message, DetailedFeedbackReport, CaseGenerationOptions } from '../../types';
 
 // Ensure the API key is available in the server environment
 if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY environment variable is not set for the serverless function.");
+    console.error('GEMINI_API_KEY is not set in environment variables');
+    throw new Error('GEMINI_API_KEY is required but not found in environment');
 }
 
 const ai = createAIClient(process.env.GEMINI_API_KEY);
 const MODEL = 'gemini-2.5-flash';
-
 
 // --- Helper to safely parse JSON from Gemini response ---
 const parseJsonResponse = <T>(text: string, context: string): T => {
@@ -29,7 +29,6 @@ const parseJsonResponse = <T>(text: string, context: string): T => {
     }
 };
 
-// --- Centralized API Error Handler ---
 const handleApiError = (error: unknown, res: NextApiResponse, context: string) => {
     console.error(`Error in ${context}:`, error);
     if (error instanceof Error && (error.message.includes('quota') || error.message.includes('429') || error.message.includes('resource has been exhausted'))) {
@@ -42,11 +41,71 @@ const handleApiError = (error: unknown, res: NextApiResponse, context: string) =
 
 // --- Handler Functions using Gemini ---
 
-async function handleGenerateCase(payload: { departmentName: string }, res: NextApiResponse) {
-    const { departmentName } = payload;
+async function handleGenerateCase(payload: { departmentName: string; options?: CaseGenerationOptions }, res: NextApiResponse) {
+    const { departmentName, options } = payload;
     const context = 'generateClinicalCase';
+    
+    // Build location-specific context
+    let locationContext = '';
+    if (options?.location) {
+        const { country, economicLevel, commonDiseases, availableResources } = options.location;
+        locationContext = `
+        
+        LOCATION CONTEXT:
+        - Country: ${country}
+        - Economic Level: ${economicLevel}
+        - Common Local Diseases: ${commonDiseases.join(', ')}
+        - Available Resources: ${availableResources}
+        
+        Please customize the case considering:
+        1. Use culturally appropriate names for the patient
+        2. Consider local disease prevalence - favor conditions common in ${country}
+        3. Tailor investigations based on available resources (${availableResources})
+        4. Adjust management protocols to local standards and resource availability
+        `;
+    }
+    
+    // Build variety context
+    let varietyContext = '';
+    if (options?.avoidSimilarTo && options.avoidSimilarTo.length > 0) {
+        varietyContext = `
+        
+        VARIETY REQUIREMENTS:
+        - Avoid generating cases similar to these recent diagnoses: ${options.avoidSimilarTo.join(', ')}
+        - Ensure this case is distinctly different in presentation and pathophysiology
+        `;
+    }
+    
+    // Build difficulty and category context
+    let difficultyContext = '';
+    if (options?.difficulty) {
+        const difficultyDescriptions = {
+            basic: 'straightforward presentation with clear symptoms, suitable for novice medical students',
+            intermediate: 'moderate complexity with some atypical features, suitable for intermediate students',
+            advanced: 'complex presentation with multiple differentials or complications, suitable for advanced students'
+        };
+        difficultyContext = `
+        
+        DIFFICULTY LEVEL: ${options.difficulty} - ${difficultyDescriptions[options.difficulty]}
+        `;
+    }
+    
+    let categoryContext = '';
+    if (options?.category) {
+        const categoryDescriptions = {
+            acute: 'sudden onset requiring immediate attention',
+            chronic: 'long-standing condition with gradual progression',
+            emergency: 'life-threatening condition requiring urgent intervention',
+            outpatient: 'stable condition suitable for outpatient management'
+        };
+        categoryContext = `
+        
+        CASE CATEGORY: ${options.category} - ${categoryDescriptions[options.category]}
+        `;
+    }
+
     const userMessage = `Generate a realistic and challenging clinical case for a medical student simulation in the '${departmentName}' department.
-    The output MUST be a single, perfectly valid JSON object with this exact structure: {"diagnosis": string, "primaryInfo": string, "openingLine": string}.
+    The output MUST be a single, perfectly valid JSON object with this exact structure: {"diagnosis": string, "primaryInfo": string, "openingLine": string, "visualAppearance": string}.
 
     - "diagnosis": The most likely diagnosis for the case.
     - "primaryInfo": A detailed clinical history string, formatted with markdown headings. This history is the single source of truth for the AI patient. It MUST include all of the following sections:
@@ -58,9 +117,23 @@ async function handleGenerateCase(payload: { departmentName: string }, res: Next
         - ## Family History
         - ## Social History
         - ## Review of Systems
-    - "openingLine": A natural, first-person statement from the patient that initiates the consultation.
+        ${departmentName === 'Pediatrics' ? '- ## CAREGIVER INFORMATION (Include details about the primary caregiver present - usually parent/guardian, their relationship to child, and their level of involvement)' : ''}
+    - "openingLine": A natural, first-person statement from the patient that initiates the consultation.${departmentName === 'Pediatrics' ? ' For pediatric cases, this should come from whichever person (child or caregiver) would naturally speak first based on the child\'s age and condition.' : ''}
+    - "visualAppearance": A concise description of the patient's visual appearance and clinical state as observed by the doctor upon first seeing them. This should ONLY include what is directly observable and clinically relevant:
+        * Physical appearance: thin/overweight, pale/flushed, sweaty/dry
+        * Signs of distress: comfortable/uncomfortable, anxious/calm, restless/still
+        * Breathing: comfortable at rest/labored/rapid
+        * Posture and movement: sitting upright/slouched/lying down, moving freely/guarded
+        * Visible clinical signs: cyanosis, jaundice, rashes, swelling
+        * General demeanor: alert/drowsy, cooperative/withdrawn
+        DO NOT include: names, ages, family relationships, or any non-visual information. Focus purely on immediate visual clinical impressions that would impact the approach to patient care. Keep it to 2-3 sentences.
 
-    Generate a classic, common case for the given department. For example, for Obstetrics, consider Iron Deficiency Anemia or Gestational Diabetes. For Pediatrics, consider Asthma or Gastroenteritis. For Gynecology, consider PCOS or Endometriosis. The case should be solvable by a medical student.`;
+    ${locationContext}
+    ${varietyContext}
+    ${difficultyContext}
+    ${categoryContext}
+
+    Generate a case that is educationally valuable and realistic for the specified context.`;
 
     try {
         const response = await ai.generateContent({
@@ -79,15 +152,41 @@ async function handleGenerateCase(payload: { departmentName: string }, res: Next
 async function handleGetPatientResponse(payload: { history: Message[], caseDetails: Case }, res: NextApiResponse) {
     const { history, caseDetails } = payload;
     const context = 'getPatientResponse';
-    const systemInstruction = `You are an AI acting as a patient in a medical simulation.
+    
+    // Check if this is a pediatric case
+    const isPediatric = caseDetails.primaryInfo.includes('## CAREGIVER INFORMATION');
+    
+    const systemInstruction = `You are an AI acting as ${isPediatric ? 'both a child patient and their caregiver in a pediatric medical simulation' : 'a patient in a medical simulation'}.
     Your entire identity and medical history are defined by the PRIMARY_INFORMATION provided below.
+    Your visual appearance is described in the VISUAL_APPEARANCE section - this is how you look and feel right now.
     - You MUST adhere strictly to this information. Do not contradict it.
-    - If the student asks a question not covered in your primary information, invent a plausible detail that is consistent with the overall diagnosis of '${caseDetails.diagnosis}'.
+    - If the student asks a question not covered in your primary information, invent a plausible detail that is consistent with the overall diagnosis of '${caseDetails.diagnosis}' and your visual appearance.
     - Respond naturally, as a real person would. Be concise.
     - NEVER break character. Do not mention that you are an AI. Do not offer a diagnosis. Do not use medical jargon.
+    - If asked about how you feel or look, respond in a way that's consistent with your visual appearance.
+
+    ${isPediatric ? `
+    PEDIATRIC CONVERSATION RULES:
+    - Determine who should respond based on the child's age and question type
+    - Children under 5: Caregiver answers almost all questions
+    - Children 5-10: Caregiver answers medical history, medications, development; child can answer about symptoms they feel
+    - Children 10-15: Child can answer most questions about their experience; caregiver helps with complex medical history
+    - Children 15+: Child answers most questions; caregiver may add details or concerns
+    
+    QUESTION TYPES:
+    - Medical history, medications, allergies, family history: Usually caregiver
+    - Current symptoms, pain, how they feel: Child if age-appropriate, otherwise caregiver
+    - What happened, when symptoms started: Both may contribute
+    - School, friends, activities: Usually child if age-appropriate
+    
+    RESPONSE FORMAT: Start your response with either "[CHILD]:" or "[CAREGIVER]:" to indicate who is speaking, then the natural response.
+    ` : ''}
 
     PRIMARY_INFORMATION:
-    ${caseDetails.primaryInfo}`;
+    ${caseDetails.primaryInfo}
+    
+    VISUAL_APPEARANCE:
+    ${caseDetails.visualAppearance}`;
     
     // Convert the history to a format suitable for the API
     const conversation = history

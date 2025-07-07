@@ -8,6 +8,21 @@ export interface Department {
   avatar: string;
 }
 
+export interface LocationInfo {
+  country: string;
+  region: string;
+  economicLevel: 'low-income' | 'middle-income' | 'high-income';
+  commonDiseases: string[];
+  availableResources: 'basic' | 'standard' | 'advanced';
+}
+
+export interface CaseGenerationOptions {
+  difficulty: 'basic' | 'intermediate' | 'advanced';
+  category: 'acute' | 'chronic' | 'emergency' | 'outpatient';
+  avoidSimilarTo?: string[]; // Previous case diagnoses to avoid
+  location?: LocationInfo;
+}
+
 export interface Message {
   sender: 'student' | 'patient' | 'system';
   text: string;
@@ -42,6 +57,7 @@ export interface Case {
     diagnosis: string;
     primaryInfo: string;
     openingLine: string;
+    visualAppearance: string;
 }
 
 export interface CaseState {

@@ -1,4 +1,4 @@
-import { Case, CaseState, Feedback, InvestigationResult, Message, DetailedFeedbackReport } from '../types';
+import { Case, CaseState, Feedback, InvestigationResult, Message, DetailedFeedbackReport, CaseGenerationOptions } from '../types';
 
 const handleApiError = async (response: Response, context: string) => {
     // Attempt to parse error JSON from the serverless function
@@ -35,9 +35,9 @@ const fetchFromApi = async (type: string, payload: object) => {
     return response.json();
 };
 
-export const generateClinicalCase = async (departmentName: string): Promise<Case> => {
-    const clinicalCase = await fetchFromApi('generateCase', { departmentName });
-    if (clinicalCase && typeof clinicalCase.primaryInfo === 'string') {
+export const generateClinicalCase = async (departmentName: string, options?: CaseGenerationOptions): Promise<Case> => {
+    const clinicalCase = await fetchFromApi('generateCase', { departmentName, options });
+    if (clinicalCase && typeof clinicalCase.primaryInfo === 'string' && typeof clinicalCase.visualAppearance === 'string') {
         return clinicalCase;
     }
     throw new Error("The server returned an invalid case format.");
