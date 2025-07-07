@@ -28,8 +28,9 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid email address' });
     }
 
+    const clerkReportMail = await ClerkReportEmail({ report })
     // Render the React email template to HTML
-    const emailHtml = render(ClerkReportEmail({ report }));
+    const emailHtml = await render( clerkReportMail );
 
     // Send the email using Resend
     const { data, error } = await resend.emails.send({

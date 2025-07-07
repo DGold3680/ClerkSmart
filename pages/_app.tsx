@@ -28,7 +28,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isLoading, setIsLoading] = useState(true);
   
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/onboarding'];
+  const publicRoutes = ['/login', '/signup', '/onboarding', '/forgot-password', '/reset-password'];
   const isPublicRoute = publicRoutes.includes(router.pathname) || 
                        router.pathname.startsWith('/api/') || 
                        router.pathname.startsWith('/_');

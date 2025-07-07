@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -99,11 +100,17 @@ export default function Login() {
             />
           </div>
           <div className="relative">
-            <Icon name="lock" size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              <Icon name={showPassword ? 'eye-off' : 'eye'} size={20} />
+            </button>
             <input
               id="password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               required
               value={password}
@@ -111,6 +118,12 @@ export default function Login() {
               placeholder="Password"
               className="w-full bg-white dark:bg-slate-800 py-3 pl-12 pr-4 rounded-lg border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
             />
+          </div>
+
+          <div className="text-center">
+            <Link href="/forgot-password" className="text-sm text-teal-500 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300">
+              Forgot your password?
+            </Link>
           </div>
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
