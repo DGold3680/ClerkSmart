@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { signIn } from '../lib/auth-client';
+import { useAppContext } from '../context/AppContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,6 +10,19 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAppContext();
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      const hasOnboarded = localStorage.getItem('hasOnboarded');
+      if (!hasOnboarded) {
+        router.push('/onboarding');
+      } else {
+        router.push('/');
+      }
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +41,13 @@ export default function Login() {
       }
 
       if (data) {
-        router.push('/');
+        // Check if user has completed onboarding
+        const hasOnboarded = localStorage.getItem('hasOnboarded');
+        if (!hasOnboarded) {
+          router.push('/onboarding');
+        } else {
+          router.push('/');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -35,6 +55,15 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking authentication status
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

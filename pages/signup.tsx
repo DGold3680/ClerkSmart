@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { signUp } from '../lib/auth-client';
+import { useAppContext } from '../context/AppContext';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,19 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAppContext();
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      const hasOnboarded = localStorage.getItem('hasOnboarded');
+      if (!hasOnboarded) {
+        router.push('/onboarding');
+      } else {
+        router.push('/');
+      }
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,7 +69,8 @@ export default function Signup() {
       }
 
       if (data) {
-        router.push('/');
+        // New users should go through onboarding
+        router.push('/onboarding');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -63,6 +78,15 @@ export default function Signup() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking authentication status
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

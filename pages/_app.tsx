@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import { AppProvider } from '../context/AppContext';
 import { ThemeProvider } from '../context/ThemeContext';
+import AuthGuard from '../components/AuthGuard';
 import '../src/app/globals.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -26,21 +27,21 @@ function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/login', '/signup', '/onboarding'];
+  const isPublicRoute = publicRoutes.includes(router.pathname) || 
+                       router.pathname.startsWith('/api/') || 
+                       router.pathname.startsWith('/_');
+  
   useEffect(() => {
+    // Don't redirect for public routes
+    if (isPublicRoute) {
+      setIsLoading(false);
+      return;
+    }
+    
     // Check if user has completed onboarding
     const hasOnboarded = typeof window !== 'undefined' ? localStorage.getItem('hasOnboarded') : null;
-    
-    // Don't redirect if user is already on the onboarding page
-    if (router.pathname === '/onboarding') {
-      setIsLoading(false);
-      return;
-    }
-    
-    // Don't redirect for API routes or special Next.js pages
-    if (router.pathname.startsWith('/api/') || router.pathname.startsWith('/_')) {
-      setIsLoading(false);
-      return;
-    }
     
     // Redirect new users to onboarding with minimal delay
     if (!hasOnboarded) {
@@ -52,17 +53,23 @@ function MyApp({ Component, pageProps }: AppProps) {
     } else {
       setIsLoading(false);
     }
-  }, [router.pathname]);
+  }, [router.pathname, isPublicRoute]);
   
   // Show branded loading screen while determining if redirect is needed
-  if (isLoading && router.pathname !== '/onboarding') {
+  if (isLoading && !isPublicRoute) {
     return <LoadingScreen />;
   }
 
   return (
     <ThemeProvider>
       <AppProvider>
-        <Component {...pageProps} />
+        {isPublicRoute ? (
+          <Component {...pageProps} />
+        ) : (
+          <AuthGuard>
+            <Component {...pageProps} />
+          </AuthGuard>
+        )}
       </AppProvider>
     </ThemeProvider>
   );
