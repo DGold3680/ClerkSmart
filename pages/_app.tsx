@@ -5,6 +5,7 @@ import AuthGuard from '../components/AuthGuard';
 import '../src/app/globals.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { AutumnProvider } from 'autumn-js/react';
 
 // Branded loading screen component
 const LoadingScreen = () => (
@@ -61,17 +62,19 @@ function MyApp({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <ThemeProvider>
-      <AppProvider>
-        {isPublicRoute ? (
-          <Component {...pageProps} />
-        ) : (
-          <AuthGuard>
+    <AutumnProvider backendUrl={process.env.NEXT_PUBLIC_AUTUMN_BACKEND_URL}>
+      <ThemeProvider>
+        <AppProvider>
+          {isPublicRoute ? (
             <Component {...pageProps} />
-          </AuthGuard>
-        )}
-      </AppProvider>
-    </ThemeProvider>
+          ) : (
+            <AuthGuard>
+              <Component {...pageProps} />
+            </AuthGuard>
+          )}
+        </AppProvider>
+      </ThemeProvider>
+    </AutumnProvider>
   );
 }
 

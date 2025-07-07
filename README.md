@@ -71,3 +71,74 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+# ClerkSmart - Intelligent Clinical Reasoning Simulator
+
+## Autumn Billing Setup
+
+ClerkSmart uses [Autumn](https://useautumn.com/) for billing and subscription management. Follow these steps to set up Autumn integration:
+
+### 1. Install Dependencies
+```bash
+npm install autumn-js
+```
+
+### 2. Environment Variables
+Add the following to your `.env.local` file:
+
+```env
+# Autumn Configuration
+AUTUMN_SECRET_KEY=am_sk_your_autumn_secret_key_here
+NEXT_PUBLIC_AUTUMN_BACKEND_URL=http://localhost:3000
+```
+
+Get your Autumn secret key from the [Autumn Dashboard](https://dashboard.useautumn.com/).
+
+### 3. Create Products in Autumn Dashboard
+
+You need to create the following products in your Autumn dashboard:
+
+#### Standard Pricing Product
+- **Product ID**: `pro-standard`
+- **Name**: "ClerkSmart PRO - Standard"
+- **Price**: $29/month
+- **Features**: Add a "cases" feature with unlimited usage
+
+#### Emerging Markets Product  
+- **Product ID**: `pro-emerging`
+- **Name**: "ClerkSmart PRO - Emerging Markets"
+- **Price**: $15/month
+- **Features**: Add a "cases" feature with unlimited usage
+
+#### Developing Regions Product
+- **Product ID**: `pro-developing` 
+- **Name**: "ClerkSmart PRO - Developing"
+- **Price**: $9/month
+- **Features**: Add a "cases" feature with unlimited usage
+
+### 4. Database Migration
+
+Run the Prisma migration to add trial tracking:
+
+```bash
+npx prisma db push
+```
+
+### 5. Stripe Configuration
+
+In your Autumn dashboard, connect your Stripe account to enable payments.
+
+## Features
+
+- **Location-based Pricing**: Automatic regional pricing based on user location
+- **Trial System**: 5 free cases before payment required
+- **Subscription Management**: Powered by Autumn + Stripe
+- **Medical Case Generation**: AI-powered clinical scenarios
+
+## Development
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:3000`.

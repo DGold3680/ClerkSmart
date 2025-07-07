@@ -127,6 +127,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const generateNewCase = useCallback(async (department: Department, options?: Partial<CaseGenerationOptions>) => {
     setIsGeneratingCase(true);
     try {
+      // Check if user is authenticated
+      if (!user?.id) {
+        throw new Error("You must be logged in to generate cases");
+      }
+
       const caseOptions: CaseGenerationOptions = {
         difficulty: options?.difficulty || generateDifficulty(),
         category: options?.category || generateCategory(),
@@ -164,7 +169,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } finally {
         setIsGeneratingCase(false);
     }
-  }, [locationInfo, previousCases, isBrowser]);
+  }, [locationInfo, previousCases, isBrowser, user]);
   
   const addMessage = useCallback((message: Message) => {
     setCaseState((prev: CaseState) => ({ ...prev, messages: [...prev.messages, message] }));

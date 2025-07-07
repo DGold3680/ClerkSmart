@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Icon } from '../components/Icon';
 import { SettingsModal } from '../components/SettingsModal';
+import { PricingModal } from '../components/PricingModal';
 
 const ActionCard: React.FC<{ icon: string; title: string; subtitle: string; onClick?: () => void; disabled?: boolean }> = ({ icon, title, subtitle, onClick, disabled }) => {
   const cardClasses = `
@@ -24,10 +25,12 @@ const ActionCard: React.FC<{ icon: string; title: string; subtitle: string; onCl
 const EntryScreen: React.FC = () => {
   const router = useRouter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
 
   return (
     <>
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <PricingModal isOpen={isPricingOpen} onClose={() => setIsPricingOpen(false)} />
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white flex flex-col p-6 sm:p-8 transition-colors duration-300">
         <header className="text-center my-12">
           <h1 className="text-5xl font-extrabold bg-gradient-to-r from-teal-400 to-emerald-500 text-transparent bg-clip-text">
@@ -57,7 +60,14 @@ const EntryScreen: React.FC = () => {
           />
         </main>
 
-        <footer className="text-center mt-12">
+        <footer className="text-center mt-12 space-y-4">
+          <button 
+            onClick={() => setIsPricingOpen(true)} 
+            className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:scale-105 transform transition-all duration-200 flex items-center space-x-2 mx-auto"
+          >
+            <Icon name="award" size={16} />
+            <span>Upgrade to PRO</span>
+          </button>
           <button onClick={() => setIsSettingsOpen(true)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center space-x-2 mx-auto">
             <Icon name="settings" size={16} />
             <span>Settings</span>

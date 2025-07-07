@@ -40,15 +40,20 @@ model session {
 }
 
 model user {
-  id            String    @id
-  email         String    @unique
-  name          String?
-  image         String?
-  emailVerified Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime
-  account       account[]
-  session       session[]
+  id                 String    @id
+  email              String    @unique
+  name               String?
+  image              String?
+  emailVerified      Boolean   @default(false)
+  trialsUsed         Int       @default(0)
+  subscriptionStatus String    @default("trial") // "trial", "active", "canceled", "expired"
+  subscriptionPlan   String?   // "PRO", etc.
+  autumnCustomerId   String?   @unique
+  location           String?   // Store location data for pricing
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime
+  account            account[]
+  session            session[]
 }
 
 model verification {

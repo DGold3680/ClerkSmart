@@ -34,9 +34,9 @@ export default async function handler(
 
     // Send the email using Resend
     const { data, error } = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'ClerkSmart <onboarding@resend.dev>', // Use verified domain in production
+      from: process.env.RESEND_FROM_EMAIL || 'ClerkSmart <onboarding@resend.dev>', // Use verified domain in production
       to: recipientEmail,
-      subject: `Your ClerkSmart Case Report: ${report.diagnosis}`,
+      subject: `Your ClerkSmart Case Report`,
       html: emailHtml,
     });
 

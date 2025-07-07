@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext';
 import { Icon } from '../components/Icon';
 import { LocationPermissionModal } from '../components/LocationPermissionModal';
 import { Department } from '../types';
+import { useCustomer } from 'autumn-js/react';
 
 const DEPARTMENTS: Department[] = [
   {
@@ -72,6 +73,9 @@ const DepartmentSelectionScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  
+  // Autumn billing integration
+  const { allowed, track, refetch } = useCustomer();
 
   const handleSelect = async (department: Department) => {
     setError(null);
@@ -89,12 +93,26 @@ const DepartmentSelectionScreen: React.FC = () => {
 
   const generateCaseWithLocation = async (department: Department) => {
     try {
+      // Check if user is allowed to generate cases using Autumn
+      if (!allowed({ featureId: "cases" })) {
+        throw new Error("UPGRADE_REQUIRED: You've reached your case limit. Please upgrade to PRO to continue generating cases.");
+      }
+
       await generateNewCase(department);
+      
+      // Track usage in Autumn after successful case generation
+      await track({ featureId: "cases" });
+      
+      // Refetch customer data to update UI
+      await refetch();
+      
       router.push("/clerking");
     } catch (err) {
       if (err instanceof Error) {
-        // Check for our custom quota error message
+        // Check for our custom quota and trial error messages
         if (err.message.startsWith("QUOTA_EXCEEDED")) {
+          setError(err.message.split(": ")[1]);
+        } else if (err.message.startsWith("UPGRADE_REQUIRED")) {
           setError(err.message.split(": ")[1]);
         } else {
           setError("Sorry, we couldn't create a new case right now. Please try again.");
