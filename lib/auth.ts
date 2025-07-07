@@ -1,23 +1,29 @@
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import { Pool } from "pg"
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL,
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Set to true in production
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
+    modelName: "session",
   },
-  advanced: {
-    generateId: () => crypto.randomUUID(),
+  user: {
+    modelName: "user",
+  },
+  account: {
+    modelName: "account", 
+  },
+  verification: {
+    modelName: "verification",
   },
 });
 
