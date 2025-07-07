@@ -1,10 +1,12 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { useAppContext } from '../context/AppContext';
-import { getInvestigationResults, getCaseFeedback } from '../services/geminiService';
-import { Icon } from '../components/Icon';
-import { InvestigationResults } from '../components/InvestigationResults';
-import { InvestigationResult, Feedback } from '../types';
+import { useRouter } from 'next/navigation';
+import { useAppContext } from '../../context/AppContext';
+import { getInvestigationResults, getCaseFeedback } from '../../services/geminiService';
+import { Icon } from '../../components/Icon';
+import { InvestigationResults } from '../../components/InvestigationResults';
+import { InvestigationResult, Feedback } from '../../types';
 
 const ProgressIndicator: React.FC<{ step: number }> = ({ step }) => (
     <div className="flex items-center justify-center space-x-4 my-8">
@@ -26,7 +28,7 @@ const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
     </div>
 );
 
-const SummaryScreen: React.FC = () => {
+export default function SummaryPage() {
     const router = useRouter();
     const { caseState, setPreliminaryData, setInvestigationResults, setFinalData, setFeedback } = useAppContext();
     const [phase, setPhase] = useState<'initial' | 'results'>('initial');
@@ -160,6 +162,4 @@ const SummaryScreen: React.FC = () => {
             </main>
         </div>
     );
-};
-
-export default SummaryScreen;
+} 

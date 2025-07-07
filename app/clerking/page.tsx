@@ -1,10 +1,12 @@
+'use client';
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/router";
-import { useAppContext } from "../context/AppContext";
-import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
-import { getPatientResponse } from "../services/geminiService";
-import { Icon } from "../components/Icon";
-import { Message } from "../types";
+import { useRouter } from "next/navigation";
+import { useAppContext } from "../../context/AppContext";
+import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
+import { getPatientResponse } from "../../services/geminiService";
+import { Icon } from "../../components/Icon";
+import { Message } from "../../types";
 
 const PermissionModal: React.FC<{
   onAllow: () => void;
@@ -36,7 +38,7 @@ const PermissionModal: React.FC<{
   </div>
 );
 
-const ClerkingScreen: React.FC = () => {
+export default function ClerkingPage() {
   const router = useRouter();
   const { caseState, addMessage } = useAppContext();
   const {
@@ -96,7 +98,7 @@ const ClerkingScreen: React.FC = () => {
             ? err.message.split(": ")[1]
             : err.message;
         }
-        setApiError(errorText); // Set API error state to display to user
+        setApiError(errorText);
         const errorMessage: Message = {
           sender: "system",
           text: `Error: ${errorText}`,
@@ -143,7 +145,6 @@ const ClerkingScreen: React.FC = () => {
       startListening();
     } catch (err) {
       console.error("Error checking mic permissions:", err);
-      // Fallback for browsers that don't support permissions.query
       handlePermissionAllow();
     }
   };
@@ -286,13 +287,11 @@ const ClerkingScreen: React.FC = () => {
                                 clipRule="evenodd"
                               />
                             </svg>
-
                           </div>
                           <h4 className="ml-2 text-sm font-semibold text-blue-900 dark:text-blue-100">
                               Visual Assessment{" "}
                             </h4>
                             </div>
-
                           <p className="text-sm text-blue-800 dark:text-blue-200 text-left md:text-center whitespace-pre-wrap">
                             {visualCue}
                           </p>
@@ -376,7 +375,6 @@ const ClerkingScreen: React.FC = () => {
                     <div>
                       {(() => {
                         const isChild = msg.text.startsWith("[CHILD]:");
-                        const speaker = isChild ? "CHILD" : "CAREGIVER";
                         const responseText = msg.text.replace(/^\[(CHILD|CAREGIVER)\]:\s*/, "");
                         
                         return (
@@ -476,6 +474,4 @@ const ClerkingScreen: React.FC = () => {
       </footer>
     </div>
   );
-};
-
-export default ClerkingScreen;
+} 

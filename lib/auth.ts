@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg"
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 import { Resend } from 'resend';
 
@@ -7,9 +7,10 @@ const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
+  database: prismaAdapter(prisma, {
+    provider: "postgresql"
   }),
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url, token }, request) => {

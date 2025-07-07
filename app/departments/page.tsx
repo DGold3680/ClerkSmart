@@ -1,9 +1,11 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { useAppContext } from '../context/AppContext';
-import { Icon } from '../components/Icon';
-import { LocationPermissionModal } from '../components/LocationPermissionModal';
-import { Department } from '../types';
+import { useRouter } from 'next/navigation';
+import { useAppContext } from '../../context/AppContext';
+import { Icon } from '../../components/Icon';
+import { LocationPermissionModal } from '../../components/LocationPermissionModal';
+import { Department } from '../../types';
 import { useCustomer } from 'autumn-js/react';
 
 const DEPARTMENTS: Department[] = [
@@ -67,7 +69,7 @@ const DepartmentCard: React.FC<{
   </div>
 );
 
-const DepartmentSelectionScreen: React.FC = () => {
+export default function DepartmentsPage() {
   const router = useRouter();
   const { generateNewCase, isGeneratingCase, locationInfo, requestLocationAccess } = useAppContext();
   const [error, setError] = useState<string | null>(null);
@@ -198,6 +200,4 @@ const DepartmentSelectionScreen: React.FC = () => {
       </div>
     </>
   );
-};
-
-export default DepartmentSelectionScreen;
+} 

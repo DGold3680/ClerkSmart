@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { useAppContext } from '../context/AppContext';
-import { Icon } from '../components/Icon';
-import { EmailCaptureModal } from '../components/EmailCaptureModal';
-import { getDetailedCaseFeedback } from '../services/geminiService';
-import { sendFeedbackEmail } from '../services/emailService';
+'use client';
 
-const FeedbackScreen: React.FC = () => {
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppContext } from '../../context/AppContext';
+import { Icon } from '../../components/Icon';
+import { EmailCaptureModal } from '../../components/EmailCaptureModal';
+import { getDetailedCaseFeedback } from '../../services/geminiService';
+import { sendFeedbackEmail } from '../../services/emailService';
+
+export default function FeedbackPage() {
     const router = useRouter();
     const { caseState, resetCase, userEmail, setUserEmail } = useAppContext();
     const { feedback, department } = caseState;
@@ -194,6 +196,4 @@ const FeedbackScreen: React.FC = () => {
         </div>
         </>
     );
-};
-
-export default FeedbackScreen;
+} 

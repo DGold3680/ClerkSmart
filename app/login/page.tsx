@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { signUp } from '../lib/auth-client';
-import { useAppContext } from '../context/AppContext';
-import { Icon } from '../components/Icon';
+'use client';
 
-export default function Signup() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-  });
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { signIn } from '../../lib/auth-client';
+import { useAppContext } from '../../context/AppContext';
+import { Icon } from '../../components/Icon';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,45 +28,30 @@ export default function Signup() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const validateForm = () => {
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     setError('');
 
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-
     try {
-      const { data, error } = await signUp.email({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
+      const { data, error } = await signIn.email({
+        email,
+        password,
       });
 
       if (error) {
-        setError(error.message || 'Failed to create account');
+        setError(error.message || 'Failed to sign in');
         return;
       }
 
       if (data) {
-        // New users should go through onboarding
-        router.push('/onboarding');
+        // Check if user has completed onboarding
+        const hasOnboarded = localStorage.getItem('hasOnboarded');
+        if (!hasOnboarded) {
+          router.push('/onboarding');
+        } else {
+          router.push('/');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -98,25 +82,11 @@ export default function Signup() {
 
       <main className="flex-grow flex flex-col justify-center w-full max-w-sm mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold">Create Account</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Start your journey with ClerkSmart.</p>
+          <h1 className="text-3xl font-bold">Welcome Back</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Log in to continue your session.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="relative">
-            <Icon name="user" size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              required
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Full Name"
-              className="w-full bg-white dark:bg-slate-800 py-3 pl-12 pr-4 rounded-lg border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-            />
-          </div>
           <div className="relative">
             <Icon name="mail" size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -125,8 +95,8 @@ export default function Signup() {
               type="email"
               autoComplete="email"
               required
-              value={formData.email}
-              onChange={handleInputChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
               className="w-full bg-white dark:bg-slate-800 py-3 pl-12 pr-4 rounded-lg border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
             />
@@ -143,13 +113,19 @@ export default function Signup() {
               id="password"
               name="password"
               type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
+              autoComplete="current-password"
               required
-              value={formData.password}
-              onChange={handleInputChange}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               className="w-full bg-white dark:bg-slate-800 py-3 pl-12 pr-4 rounded-lg border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
             />
+          </div>
+
+          <div className="text-center">
+            <Link href="/forgot-password" className="text-sm text-teal-500 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300">
+              Forgot your password?
+            </Link>
           </div>
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -162,18 +138,18 @@ export default function Signup() {
             {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
-                <span>Creating account...</span>
+                <span>Signing in...</span>
               </>
             ) : (
-              <span>Create Account</span>
+              <span>Log In</span>
             )}
           </button>
         </form>
 
         <p className="text-center text-slate-500 dark:text-slate-400 mt-8">
-          Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-teal-500 hover:underline">
-            Log In
+          Don't have an account?{' '}
+          <Link href="/signup" className="font-semibold text-teal-500 hover:underline">
+            Sign Up
           </Link>
         </p>
       </main>

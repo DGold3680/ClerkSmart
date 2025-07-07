@@ -1,3 +1,5 @@
+"use client"
+
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { CaseState, Department, Feedback, InvestigationResult, Message, Case, LocationInfo, CaseGenerationOptions } from '../types';
 import { generateClinicalCase } from '../services/geminiService';
